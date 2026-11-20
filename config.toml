@@ -1,0 +1,17 @@
+discord_app_id = "1573256731809554483"
+
+# Basis-Ordner, in denen nach LIVE / PTU / EPTU / TECH-PREVIEW gesucht wird
+sc_base_dirs = [
+    "D:\\Roberts Space Industries\\StarCitizen",
+    "C:\\Program Files\\Roberts Space Industries\\StarCitizen",
+]
+
+# Optional: festes Environment erzwingen (z. B. "PTU" oder "LIVE").
+# Leer lassen für automatische Erkennung anhand der neuesten Game.log.
+preferred_env = ""
+
+# Abfrage-Intervall für neue Log-Zeilen in Millisekunden
+poll_interval_ms = 1000
+
+# Presence automatisch leeren, wenn StarCitizen.exe nicht mehr läuft
+require_running_process = true

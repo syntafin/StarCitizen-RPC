@@ -1,0 +1,90 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: meta
+        shell: pwsh
+        run: |
+          $tag = "${{ github.event.release.tag_name }}"
+          $ver = $tag.TrimStart("v")
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$ver" >> $env:GITHUB_OUTPUT
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Run tests
+        run: cargo test --locked
+
+      - name: Build Release Binary
+        run: cargo build --release --locked --target x86_64-pc-windows-msvc
+
+      - name: Install Inno Setup & Build Installer
+        shell: pwsh
+        run: |
+          choco install innosetup -y --no-progress
+          New-Item -ItemType Directory -Force -Path target\release | Out-Null
+          Copy-Item target\x86_64-pc-windows-msvc\release\star-citizen-presence.exe target\release\star-citizen-presence.exe -Force
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          & $iscc "/DAppVersion=${{ steps.meta.outputs.version }}" installer.iss
+
+      - name: Generate English Changelog
+        id: changelog
+        shell: pwsh
+        run: |
+          $currentTag = "${{ steps.meta.outputs.tag }}"
+          $tags = git tag --sort=-v:refname
+          $prevTag = $tags | Where-Object { $_ -ne $currentTag } | Select-Object -First 1
+
+          if ($prevTag) {
+            $commits = git log "$prevTag..$currentTag" --pretty=format:"- %s (%h)" --no-merges
+            $compareLine = "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$prevTag...$currentTag"
+          } else {
+            $commits = git log "$currentTag" --pretty=format:"- %s (%h)" --no-merges
+            $compareLine = ""
+          }
+
+          if (-not $commits) {
+            $commits = "- Maintenance and build updates."
+          }
+
+          $body = @"
+          ## What's Changed
+
+          $commits
+
+          ## Downloads
+          - **``StarCitizenPresence-Setup.exe``** – Windows installer (includes optional Autostart setup)
+          - **``star-citizen-presence.exe``** – Standalone portable binary (used by the built-in auto-updater)
+
+          $compareLine
+          "@
+
+          $body | Out-File -FilePath release_notes.md -Encoding utf8
+
+      - name: Upload Assets & English Changelog
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          body_path: release_notes.md
+          files: |
+            target/x86_64-pc-windows-msvc/release/star-citizen-presence.exe
+            dist/StarCitizenPresence-Setup.exe
+            config.toml
