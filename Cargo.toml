@@ -14,7 +14,7 @@ self-replace = "1.5"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.8"
-tray-icon = "0.19"
+tray-icon = { version = "0.26", default-features = false, features = ["ksni"] }
 ureq = { version = "2.10", features = ["json"] }
 winit = "0.30"
 
