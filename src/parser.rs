@@ -1,6 +1,6 @@
 use crate::state::{
-    manufacturer_asset_key, prettify_ac_name, prettify_location, prettify_vehicle_class,
-    region_from_shard, GameMode, PresenceState,
+    manufacturer_asset_key, normalize_env_name, prettify_ac_name, prettify_location,
+    prettify_vehicle_class, region_from_shard, GameMode, PresenceState,
 };
 use chrono::DateTime;
 use regex::Regex;
@@ -61,7 +61,7 @@ pub fn apply_log_line(state: &mut PresenceState, line: &str) {
     }
 
     if let Some(cap) = p.env_tag.captures(line) {
-        state.env = Some(cap[1].to_ascii_uppercase());
+        state.env = Some(normalize_env_name(&cap[1]));
     }
 
     if let Some(cap) = p.character.captures(line) {
@@ -329,5 +329,28 @@ mod tests {
         apply_log_line(&mut s, r#"<2026-11-20T09:35:00.000Z> [Notice] <Quantum Drive Arrived - Arrived at Final Destination> [ItemNavigation][CL][40088] | AUTH | DRAK_Corsair_123[123]|CSCItemNavigation::OnQuantumDriveArrived"#);
         let r3 = s.render();
         assert_eq!(r3.state, "Drake Corsair (Crew: Kumpel) • Quantum-Ziel erreicht");
+    }
+
+    #[test]
+    fn normalizes_env_tags_for_display() {
+        for (raw, expected) in [
+            ("PUB", "LIVE"),
+            ("LIVE", "LIVE"),
+            ("PTU", "PTU"),
+            ("EPTU", "EPTU"),
+            ("TECH-PREVIEW", "TECH PREVIEW"),
+        ] {
+            let mut s = PresenceState::default();
+            apply_log_line(
+                &mut s,
+                &format!(r#"<2026-11-20T10:21:17.228Z>    [Cmdline* ] --envtag='{raw}'"#),
+            );
+            apply_log_line(
+                &mut s,
+                r#"<2026-11-20T10:22:00.000Z> Loading screen for Nyx : SC_Frontend closed after 5.0 seconds"#,
+            );
+            assert_eq!(s.env.as_deref(), Some(expected));
+            assert_eq!(s.render().details, format!("PU ({expected}): Nyx"));
+        }
     }
 }

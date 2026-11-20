@@ -64,7 +64,7 @@ impl PresenceState {
 
     pub fn render(&self) -> RenderedPresence {
         let env_suffix = match &self.env {
-            Some(env) if !env.is_empty() && env != "LIVE" => format!(" ({env})"),
+            Some(env) if !env.is_empty() => format!(" ({})", normalize_env_name(env)),
             _ => String::new(),
         };
 
@@ -214,6 +214,19 @@ impl fmt::Display for RenderedPresence {
             "[{} | {}] (img: {})",
             self.details, self.state, self.large_image
         )
+    }
+}
+
+pub fn normalize_env_name(raw: &str) -> String {
+    let upper = raw.trim().to_ascii_uppercase();
+    match upper.as_str() {
+        "PUB" | "LIVE" => "LIVE".to_string(),
+        "PTU" => "PTU".to_string(),
+        "EPTU" => "EPTU".to_string(),
+        "TECH-PREVIEW" | "TECH_PREVIEW" | "TECHPREVIEW" | "TECH PREVIEW" => {
+            "TECH PREVIEW".to_string()
+        }
+        _ => upper,
     }
 }
 

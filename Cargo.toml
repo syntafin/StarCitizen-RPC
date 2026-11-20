@@ -1,6 +1,6 @@
 [package]
 name = "star-citizen-presence"
-version = "0.1.0"
+version = "0.1.4"
 edition = "2021"
 description = "Discord Rich Presence for Star Citizen based on Game.log"
 

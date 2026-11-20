@@ -31,9 +31,13 @@ jobs:
           targets: x86_64-pc-windows-msvc
 
       - name: Run tests
+        env:
+          APP_VERSION: ${{ steps.meta.outputs.version }}
         run: cargo test --locked
 
       - name: Build Release Binary
+        env:
+          APP_VERSION: ${{ steps.meta.outputs.version }}
         run: cargo build --release --locked --target x86_64-pc-windows-msvc
 
       - name: Install Inno Setup & Build Installer

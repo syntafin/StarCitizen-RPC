@@ -180,7 +180,7 @@ impl TrayApp {
         let env_ptu_item = CheckMenuItem::new("PTU", true, cur_env.eq_ignore_ascii_case("PTU"), None);
         let env_eptu_item = CheckMenuItem::new("EPTU", true, cur_env.eq_ignore_ascii_case("EPTU"), None);
         let env_tech_item = CheckMenuItem::new(
-            "TECH-PREVIEW",
+            "TECH PREVIEW",
             true,
             cur_env.eq_ignore_ascii_case("TECH-PREVIEW"),
             None,

@@ -5,7 +5,10 @@ use std::io;
 use std::process::Command;
 
 const GITHUB_REPO: &str = "syntafin/starcitizen-rpc";
-pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
+pub const CURRENT_VERSION: &str = match option_env!("APP_VERSION") {
+    Some(v) if !v.is_empty() => v,
+    _ => env!("CARGO_PKG_VERSION"),
+};
 
 #[derive(Debug, Deserialize)]
 struct GitHubRelease {
@@ -81,6 +84,11 @@ pub fn check_and_update() -> Result<UpdateResult, String> {
             .map_err(|e| format!("Fehler beim Speichern des Updates: {e}"))?;
     }
 
+    if is_same_as_current_exe(&tmp_path) {
+        let _ = std::fs::remove_file(&tmp_path);
+        return Ok(UpdateResult::UpToDate(CURRENT_VERSION.to_string()));
+    }
+
     self_replace::self_replace(&tmp_path)
         .map_err(|e| format!("Binary-Austausch fehlgeschlagen: {e}"))?;
     let _ = std::fs::remove_file(&tmp_path);
@@ -89,6 +97,23 @@ pub fn check_and_update() -> Result<UpdateResult, String> {
         from: CURRENT_VERSION.to_string(),
         to: release.tag_name,
     })
+}
+
+fn is_same_as_current_exe(candidate: &std::path::Path) -> bool {
+    let Ok(cur_exe) = env::current_exe() else {
+        return false;
+    };
+    let (Ok(cur_meta), Ok(new_meta)) = (std::fs::metadata(&cur_exe), std::fs::metadata(candidate))
+    else {
+        return false;
+    };
+    if cur_meta.len() != new_meta.len() {
+        return false;
+    }
+    match (std::fs::read(&cur_exe), std::fs::read(candidate)) {
+        (Ok(a), Ok(b)) => a == b,
+        _ => false,
+    }
 }
 
 pub fn restart_self() -> ! {
