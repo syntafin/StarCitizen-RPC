@@ -7,7 +7,8 @@ A Windows system tray application written in Rust that reads Star Citizen's `Gam
 - **Log-based state tracking:** Parses `Game.log` for game mode (Startup, Main Menu, Loading, Persistent Universe, Arena Commander), player name, system, shard, region, location, jurisdiction, armistice/hangar/quantum status, and current ship with manufacturer icons.
 - **Multi-environment support:** Searches configured base directories for `LIVE`, `PTU`, `EPTU`, and `TECH-PREVIEW`, or locks to a specific environment via `preferred_env`.
 - **Process check:** Automatically clears Discord Rich Presence when `StarCitizen.exe` is not running (configurable via `require_running_process`).
-- **System tray integration:** Runs in the Windows tray with controls to pause/resume, reload `config.toml`, toggle Windows autostart, and quit.
+- **System tray integration:** Runs in the Windows tray with controls to pause/resume, pick the Star Citizen folder, switch the preferred environment (`Auto`, `LIVE`, `PTU`, `EPTU`, `TECH-PREVIEW`), toggle the running-process check and Windows autostart, open `config.toml`, re-run the setup wizard, and quit.
+- **First-Run Wizard:** Automatically scans drives for Star Citizen installations on first launch (or with `--setup`), lets you pick a folder via the native Windows dialog, and configures environment detection, autostart, and process checking.
 - **Built-in auto-updater:** Checks GitHub Releases 5 seconds after startup and every 6 hours thereafter, replacing the executable in place when a newer release is available.
 
 ## Installation
@@ -19,7 +20,7 @@ Download the latest release from [GitHub Releases](https://github.com/syntafin/S
 
 ## Configuration
 
-Settings are read from `config.toml` next to the executable (falling back to the current working directory):
+Settings are read from `config.toml` next to the executable (falling back to `%APPDATA%\StarCitizenPresence\config.toml` if the executable directory is not writable, or the current working directory):
 
 ```toml
 discord_app_id = "1573256731809554483"
@@ -39,6 +40,9 @@ poll_interval_ms = 1000
 
 # Clear presence automatically when StarCitizen.exe is not running
 require_running_process = true
+
+# Set to true after the First-Run Wizard finishes
+setup_completed = false
 ```
 
 ## Development
@@ -74,6 +78,7 @@ cargo test --locked
 | `src/discord.rs` | Discord IPC client wrapper |
 | `src/autostart.rs` | Windows registry (`HKCU\...\Run`) autostart management |
 | `src/updater.rs` | GitHub Releases self-updater |
+| `src/wizard.rs` | Native Windows First-Run Wizard and folder picker dialogs |
 | `images/` | Tray icon and ship manufacturer assets |
 | `installer.iss` | Inno Setup script for `StarCitizenPresence-Setup.exe` |
 | `.github/workflows/release.yml` | CI workflow triggered on published GitHub releases |

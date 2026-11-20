@@ -15,3 +15,6 @@ poll_interval_ms = 1000
 
 # Presence automatisch leeren, wenn StarCitizen.exe nicht mehr läuft
 require_running_process = true
+
+# Beim ersten Start automatisch den Einrichtungs-Assistenten anzeigen
+setup_completed = false
