@@ -9,6 +9,7 @@ AppPublisher=syntafin
 AppPublisherURL=https://github.com/syntafin/starcitizen-rpc
 DefaultDirName={localappdata}\Programs\StarCitizenPresence
 DefaultGroupName=Star Citizen Presence
+SetupIconFile=images\STARCITIZEN_WHITE.ico
 UninstallDisplayIcon={app}\star-citizen-presence.exe
 OutputDir=dist
 OutputBaseFilename=StarCitizenPresence-Setup
@@ -22,6 +23,9 @@ Name: "autostart"; Description: "Mit Windows starten (Autostart)"; GroupDescript
 [Files]
 Source: "target\release\star-citizen-presence.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "config.toml"; DestDir: "{app}"; Flags: onlyifdoesntexist
+
+[Icons]
+Name: "{group}\Star Citizen Presence"; Filename: "{app}\star-citizen-presence.exe"; WorkingDir: "{app}"
 
 [Registry]
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "StarCitizenPresence"; ValueData: """{app}\star-citizen-presence.exe"""; Tasks: autostart; Flags: uninsdeletevalue
