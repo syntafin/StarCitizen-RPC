@@ -5,6 +5,8 @@ A Windows system tray application written in Rust that reads Star Citizen's `Gam
 ## Features
 
 - **Log-based state tracking:** Parses `Game.log` for game mode (Startup, Main Menu, Loading, Persistent Universe, Arena Commander), player name, system, shard, region, location, jurisdiction, armistice/hangar/quantum status, and current ship with manufacturer icons.
+- **Optional live telemetry (gRPC):** Connects to Star Citizen's local `GameTelemetryService` (`127.0.0.1:2942` / `50051`) to refine ship, crew role (Pilot / Gunner / Crew), on-foot/EVA state, flight mode (NAV / SCM / Landed / Quantum Ready), downed status, combat/shield warnings, vitals, environment, and optional aUEC balance — falling back seamlessly to `Game.log` if disabled or unavailable.
+- **Settings window & multi-language support (DE / EN / FR):** Includes a GUI settings window (`--settings` or via the tray menu) with plain-language descriptions, a live Discord preview, and automatic Windows language detection (`language = "auto"`).
 - **Multi-environment support:** Searches configured base directories for `LIVE`, `PTU`, `EPTU`, and `TECH-PREVIEW`, or locks to a specific environment via `preferred_env`.
 - **Process check:** Automatically clears Discord Rich Presence when `StarCitizen.exe` is not running (configurable via `require_running_process`).
 - **System tray integration:** Runs in the Windows tray with controls to pause/resume, pick the Star Citizen folder, switch the preferred environment (`Auto`, `LIVE`, `PTU`, `EPTU`, `TECH-PREVIEW`), toggle the running-process check and Windows autostart, open `config.toml`, re-run the setup wizard, and quit.
@@ -43,7 +45,33 @@ require_running_process = true
 
 # Set to true after the First-Run Wizard finishes
 setup_completed = false
+
+# App & Discord language ("auto", "de", "en", "fr")
+language = "auto"
+
+# Use live gRPC telemetry when available (falls back to Game.log)
+use_telemetry = true
+show_eva_and_on_foot = true
+show_crew_role = true
+show_flight_details = true
+show_downed_status = true
+show_combat_status = false
+show_ship_health = false
+show_environment = false
+show_vitals_warning = false
+show_balance_auec = false
 ```
+
+### Enabling Star Citizen Live Telemetry (Optional)
+
+To allow Star Citizen to expose its local read-only gRPC telemetry stream:
+1. Set the Windows environment variable `GRPC_CLIENT_SERVER_ENABLED=true`.
+2. Add the following lines to `user.cfg` in your Star Citizen channel folder (e.g. `StarCitizen\LIVE\user.cfg`):
+   ```ini
+   grpc.client.server.enabled = 1
+   server.game.telemetry.enabled = 1
+   ```
+3. Restart the RSI Launcher and Star Citizen.
 
 ## Development
 
@@ -76,6 +104,9 @@ cargo test --locked
 | `src/parser.rs` | Regex-based parsing of `Game.log` lines into state updates |
 | `src/state.rs` | Presence state machine and Discord Rich Presence formatting |
 | `src/discord.rs` | Discord IPC client wrapper |
+| `src/i18n.rs` | Multi-language strings (`de`, `en`, `fr`) and Windows locale detection |
+| `src/settings_ui.rs` | `egui`/`eframe` settings window with descriptions and live preview |
+| `src/telemetry.rs` | Local HTTP/2 gRPC + Protobuf client for Star Citizen telemetry |
 | `src/autostart.rs` | Windows registry (`HKCU\...\Run`) autostart management |
 | `src/updater.rs` | GitHub Releases self-updater |
 | `src/wizard.rs` | Native Windows First-Run Wizard and folder picker dialogs |

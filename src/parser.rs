@@ -263,6 +263,7 @@ pub fn apply_log_line(state: &mut PresenceState, line: &str) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::i18n::Language;
 
     #[test]
     fn parses_pu_and_ship_and_ac_flow() {
@@ -285,7 +286,7 @@ mod tests {
         apply_log_line(&mut s, r#"<2026-11-20T08:53:15.969Z> [Notice] <RequestLocationInventory> Player[Syntafin] requested inventory for Location[Nyx_Levski]"#);
         apply_log_line(&mut s, r#"<2026-11-20T08:56:29.404Z> [Notice] <SHUDEvent_OnNotification> Added notification "You have joined channel 'Kruger L-21 Wolf : Syntafin'."#);
 
-        let rendered = s.render();
+        let rendered = s.render(Language::De);
         assert_eq!(rendered.details, "PU (PTU): Nyx • US-East");
         assert_eq!(rendered.state, "Kruger L-21 Wolf • Levski");
         assert_eq!(rendered.large_image, "starcitizen_white");
@@ -296,7 +297,7 @@ mod tests {
         apply_log_line(&mut s, r#"<2026-11-20T09:06:39.974Z> [VEHICLE SPAWN] CPlayerShipRespawnManager::OnVehicleSpawned 200000304500 (ESPR_Talon_200000304500) by player 0"#);
         apply_log_line(&mut s, r#"<2026-11-20T09:06:40.894Z> [VEHICLE SPAWN] CPlayerShipRespawnManager::OnVehicleSpawned 10182 (Default_10182) by player 0"#);
 
-        let rendered_ac = s.render();
+        let rendered_ac = s.render(Language::De);
         assert_eq!(rendered_ac.details, "AC (PTU): Free Flight (Astors Clearing)");
         assert_eq!(rendered_ac.state, "Syntafin • Esperia Talon");
         assert_eq!(rendered_ac.large_image, "starcitizen_white");
@@ -314,7 +315,7 @@ mod tests {
 
         // NOT AUTH Quantum Travel von anderem Spieler darf Levski nicht löschen
         apply_log_line(&mut s, r#"<2026-11-20T09:21:00.000Z> [Notice] <Quantum Drive Arrived - Arrived at Final Destination> [ItemNavigation][CL][40088] | NOT AUTH | ANVL_Asgard_123[123]|CSCItemNavigation::OnQuantumDriveArrived"#);
-        let r1 = s.render();
+        let r1 = s.render(Language::De);
         assert_eq!(r1.state, "Drake Corsair (Crew: Kumpel) • Levski");
         assert_eq!(r1.small_image.as_deref(), Some("drake"));
 
@@ -322,13 +323,25 @@ mod tests {
         apply_log_line(&mut s, r#"<2026-11-20T09:30:28.723Z> [Notice] <SHUDEvent_OnNotification> Added notification "Entered Ungoverned Jurisdiction: ""#);
         apply_log_line(&mut s, r#"<2026-11-20T09:30:30.365Z> [Notice] <SHUDEvent_OnNotification> Added notification "Leaving Armistice Zone - Caution Advised: ""#);
         apply_log_line(&mut s, r#"<2026-11-20T09:30:34.550Z> [Notice] <Update Inventory Location> Player [Syntafin] is changing location. Landing [3723364946] -> [0]. Location [3723364946] -> [2627827560]. Pending [0]"#);
-        let r2 = s.render();
+        let r2 = s.render(Language::De);
         assert_eq!(r2.state, "Drake Corsair (Crew: Kumpel) • Ungoverned");
 
         // Eigenes AUTH Quantum Travel
         apply_log_line(&mut s, r#"<2026-11-20T09:35:00.000Z> [Notice] <Quantum Drive Arrived - Arrived at Final Destination> [ItemNavigation][CL][40088] | AUTH | DRAK_Corsair_123[123]|CSCItemNavigation::OnQuantumDriveArrived"#);
-        let r3 = s.render();
+        let r3 = s.render(Language::De);
         assert_eq!(r3.state, "Drake Corsair (Crew: Kumpel) • Quantum-Ziel erreicht");
+
+        let r3_en = s.render(Language::En);
+        assert_eq!(
+            r3_en.state,
+            "Drake Corsair (Crew: Kumpel) • Quantum Destination Reached"
+        );
+
+        let r3_fr = s.render(Language::Fr);
+        assert_eq!(
+            r3_fr.state,
+            "Drake Corsair (Équipage: Kumpel) • Destination Quantum atteinte"
+        );
     }
 
     #[test]
@@ -350,7 +363,7 @@ mod tests {
                 r#"<2026-11-20T10:22:00.000Z> Loading screen for Nyx : SC_Frontend closed after 5.0 seconds"#,
             );
             assert_eq!(s.env.as_deref(), Some(expected));
-            assert_eq!(s.render().details, format!("PU ({expected}): Nyx"));
+            assert_eq!(s.render(Language::De).details, format!("PU ({expected}): Nyx"));
         }
     }
 }

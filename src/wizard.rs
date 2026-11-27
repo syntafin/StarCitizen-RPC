@@ -1,5 +1,6 @@
 use crate::autostart;
 use crate::config::{discover_sc_base_dirs, has_any_sc_env, Config};
+use crate::i18n::Language;
 use crate::updater;
 use std::path::{Path, PathBuf};
 
@@ -139,21 +140,21 @@ pub fn pick_folder(_title: &str) -> Option<PathBuf> {
 }
 
 pub fn run_first_run_wizard(config: &mut Config, config_path: &Path) {
+    let tr = Language::from_config_str(&config.language).strings();
     let discovered = discover_sc_base_dirs();
 
     if !discovered.is_empty() {
         let list = discovered.join("\n");
         let msg = format!(
-            "Willkommen bei Star Citizen Presence!\n\nFolgende Star Citizen-Ordner wurden automatisch gefunden:\n{list}\n\nMöchtest du diese Ordner verwenden?\n\nJa = Gefundene Ordner übernehmen\nNein = Anderen Ordner manuell auswählen\nAbbrechen = Einrichtung überspringen"
+            "{}{list}{}",
+            tr.wizard_step1_found_intro, tr.wizard_step1_found_question
         );
-        match ask_yes_no_cancel("Star Citizen Presence - Einrichtung (1/4)", &msg) {
+        match ask_yes_no_cancel(tr.wizard_step1_title, &msg) {
             Some(true) => {
                 config.sc_base_dirs = discovered;
             }
             Some(false) => {
-                if let Some(picked) = pick_folder(
-                    "Star Citizen-Ordner wählen (z. B. Roberts Space Industries\\StarCitizen)",
-                ) {
+                if let Some(picked) = pick_folder(tr.wizard_folder_picker_title) {
                     upsert_sc_base_dir(&mut config.sc_base_dirs, &picked);
                 }
             }
@@ -164,58 +165,43 @@ pub fn run_first_run_wizard(config: &mut Config, config_path: &Path) {
             }
         }
     } else {
-        let wants_pick = ask_yes_no(
-            "Star Citizen Presence - Einrichtung (1/4)",
-            "Willkommen bei Star Citizen Presence!\n\nEs wurde kein Star Citizen-Ordner automatisch gefunden.\nMöchtest du deinen Star Citizen-Ordner jetzt manuell auswählen?",
-        );
+        let wants_pick = ask_yes_no(tr.wizard_step1_title, tr.wizard_step1_missing_body);
         if wants_pick {
-            if let Some(picked) = pick_folder(
-                "Star Citizen-Ordner wählen (z. B. Roberts Space Industries\\StarCitizen)",
-            ) {
+            if let Some(picked) = pick_folder(tr.wizard_folder_picker_title) {
                 let normalized = normalize_sc_base_dir(&picked);
                 if !has_any_sc_env(&normalized) {
-                    updater::show_message(
-                        "Hinweis zum Ordner",
-                        "In dem gewählten Ordner wurde noch kein LIVE-, PTU-, EPTU- oder TECH-PREVIEW-Unterordner gefunden. Der Pfad wird trotzdem gespeichert.",
-                    );
+                    updater::show_message(tr.wizard_dir_hint_title, tr.wizard_dir_hint_body);
                 }
                 upsert_sc_base_dir(&mut config.sc_base_dirs, &normalized);
             }
         }
     }
 
-    match ask_yes_no_cancel(
-        "Star Citizen Presence - Environment (2/4)",
-        "Soll automatisch das neueste Environment (LIVE, PTU, EPTU, TECH-PREVIEW) erkannt werden?\n\nJa = Automatisch erkennen\nNein = Fest auf LIVE setzen\nAbbrechen = Aktuelle Einstellung behalten",
-    ) {
+    match ask_yes_no_cancel(tr.wizard_step2_title, tr.wizard_step2_body) {
         Some(true) => config.preferred_env.clear(),
         Some(false) => config.preferred_env = "LIVE".to_string(),
         None => {}
     }
 
-    let enable_autostart = ask_yes_no(
-        "Star Citizen Presence - Autostart (3/4)",
-        "Soll Star Citizen Presence automatisch mit Windows starten?",
-    );
+    let enable_autostart = ask_yes_no(tr.wizard_step3_title, tr.wizard_step3_body);
     if let Err(err) = autostart::set_enabled(enable_autostart) {
-        updater::show_message("Autostart-Fehler", &err);
+        updater::show_message(tr.msg_autostart_error_title, &err);
     }
 
-    config.require_running_process = ask_yes_no(
-        "Star Citizen Presence - Prozess-Erkennung (4/4)",
-        "Soll Discord Rich Presence automatisch geleert werden, wenn StarCitizen.exe nicht läuft?",
-    );
+    config.require_running_process = ask_yes_no(tr.wizard_step4_title, tr.wizard_step4_body);
 
     config.setup_completed = true;
     match config.save(config_path) {
         Ok(()) => updater::show_message(
-            "Einrichtung abgeschlossen",
+            tr.wizard_done_title,
             &format!(
-                "Einstellungen gespeichert in:\n{}\n\nAlle Optionen kannst du jederzeit über das Tray-Symbol ändern.",
-                config_path.display()
+                "{}{}{}",
+                tr.wizard_done_saved_prefix,
+                config_path.display(),
+                tr.wizard_done_hint
             ),
         ),
-        Err(err) => updater::show_message("Konfiguration konnte nicht gespeichert werden", &err),
+        Err(err) => updater::show_message(tr.wizard_save_error_title, &err),
     }
 }
 

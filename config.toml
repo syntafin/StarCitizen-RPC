@@ -18,3 +18,36 @@ require_running_process = true
 
 # Beim ersten Start automatisch den Einrichtungs-Assistenten anzeigen
 setup_completed = false
+
+# Sprache der App und Discord-Texte ("auto", "de", "en", "fr")
+language = "auto"
+
+# Telemetrie-API nutzen (mit Fallback auf Game.log)
+use_telemetry = true
+
+# Zu Fuß / EVA-Zustand anzeigen
+show_eva_and_on_foot = true
+
+# Besatzungsrolle anzeigen (Pilot / Geschützbediener / Besatzung)
+show_crew_role = true
+
+# Flugdetails anzeigen (NAV / SCM / Gelandet / Quantum)
+show_flight_details = true
+
+# Anzeigen, wenn der Charakter kampfunfähig (Downed) ist
+show_downed_status = true
+
+# Kampf- & Bedrohungswarnungen anzeigen (z. B. Unter Beschuss / Raketenwarnung)
+show_combat_status = false
+
+# Kritischen Schiffs-/Schildzustand anzeigen
+show_ship_health = false
+
+# Extreme Umgebungsbedingungen zu Fuß anzeigen (Vakuum, Strahlung, Temperatur)
+show_environment = false
+
+# Kritische Vitalwerte anzeigen (Sauerstoff / Gesundheit)
+show_vitals_warning = false
+
+# Aktuellen aUEC-Kontostand anzeigen
+show_balance_auec = false

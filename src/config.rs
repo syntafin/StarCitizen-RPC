@@ -19,6 +19,30 @@ pub struct Config {
     pub require_running_process: bool,
     #[serde(default)]
     pub setup_completed: bool,
+    #[serde(default = "default_language")]
+    pub language: String,
+
+    // Telemetrie- & Privatsphäre-Optionen
+    #[serde(default = "default_true")]
+    pub use_telemetry: bool,
+    #[serde(default = "default_true")]
+    pub show_eva_and_on_foot: bool,
+    #[serde(default = "default_true")]
+    pub show_crew_role: bool,
+    #[serde(default = "default_true")]
+    pub show_flight_details: bool,
+    #[serde(default = "default_true")]
+    pub show_downed_status: bool,
+    #[serde(default)]
+    pub show_combat_status: bool,
+    #[serde(default)]
+    pub show_ship_health: bool,
+    #[serde(default)]
+    pub show_environment: bool,
+    #[serde(default)]
+    pub show_vitals_warning: bool,
+    #[serde(default)]
+    pub show_balance_auec: bool,
 }
 
 fn default_discord_app_id() -> String {
@@ -40,6 +64,14 @@ fn default_require_running_process() -> bool {
     true
 }
 
+fn default_language() -> String {
+    "auto".to_string()
+}
+
+fn default_true() -> bool {
+    true
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
@@ -49,6 +81,17 @@ impl Default for Config {
             poll_interval_ms: default_poll_interval(),
             require_running_process: default_require_running_process(),
             setup_completed: false,
+            language: default_language(),
+            use_telemetry: true,
+            show_eva_and_on_foot: true,
+            show_crew_role: true,
+            show_flight_details: true,
+            show_downed_status: true,
+            show_combat_status: false,
+            show_ship_health: false,
+            show_environment: false,
+            show_vitals_warning: false,
+            show_balance_auec: false,
         }
     }
 }
@@ -181,6 +224,17 @@ mod tests {
             poll_interval_ms: 1500,
             require_running_process: false,
             setup_completed: true,
+            language: "fr".to_string(),
+            use_telemetry: false,
+            show_eva_and_on_foot: false,
+            show_crew_role: false,
+            show_flight_details: false,
+            show_downed_status: false,
+            show_combat_status: true,
+            show_ship_health: true,
+            show_environment: true,
+            show_vitals_warning: true,
+            show_balance_auec: true,
         };
 
         cfg.save(&tmp).expect("save should succeed");
@@ -193,5 +247,32 @@ mod tests {
         assert_eq!(loaded.poll_interval_ms, 1500);
         assert!(!loaded.require_running_process);
         assert!(loaded.setup_completed);
+        assert_eq!(loaded.language, "fr");
+        assert!(!loaded.use_telemetry);
+        assert!(!loaded.show_downed_status);
+        assert!(loaded.show_combat_status);
+        assert!(loaded.show_balance_auec);
+    }
+
+    #[test]
+    fn loads_legacy_config_with_new_defaults() {
+        let tmp = env::temp_dir().join("scp_config_legacy_test.toml");
+        fs::write(
+            &tmp,
+            "discord_app_id = \"999\"\npreferred_env = \"LIVE\"\nsetup_completed = true\n",
+        )
+        .expect("write legacy config");
+
+        let loaded = Config::load(&tmp);
+        let _ = fs::remove_file(&tmp);
+
+        assert_eq!(loaded.discord_app_id, "999");
+        assert_eq!(loaded.preferred_env, "LIVE");
+        assert_eq!(loaded.language, "auto");
+        assert!(loaded.use_telemetry);
+        assert!(loaded.show_eva_and_on_foot);
+        assert!(loaded.show_downed_status);
+        assert!(!loaded.show_combat_status);
+        assert!(!loaded.show_balance_auec);
     }
 }
